@@ -145,3 +145,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
 #     'JTI_CLAIM': 'jti',
 # }
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),  # Default short-lived token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # Default for refresh tokens
+    # Other JWT settings...
+}

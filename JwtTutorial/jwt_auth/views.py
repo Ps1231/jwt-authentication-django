@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import serializers
+from datetime import timedelta
+
 
 # Serializer for Register
 class RegisterSerializer(serializers.ModelSerializer):
@@ -41,12 +43,29 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            user = authenticate(username=serializer.validated_data['username'],
-                                password=serializer.validated_data['password'])
+            user = authenticate(
+                username=serializer.validated_data['username'],
+                password=serializer.validated_data['password']
+            )
             if user is not None:
+                remember_me = request.data.get('remember_me', False)
+
+                # Adjust token lifetime based on "remember_me"
+                if remember_me:
+                    access_token_lifetime = timedelta(days=7)  # 7-day token for "remember me"
+                    refresh_token_lifetime = timedelta(days=30)  # Optional
+                else:
+                    access_token_lifetime = timedelta(minutes=1)
+                    refresh_token_lifetime = timedelta(days=1)
+
+                # Generate tokens
                 refresh = RefreshToken.for_user(user)
+                refresh.set_exp(lifetime=refresh_token_lifetime)
+                access_token = refresh.access_token
+                access_token.set_exp(lifetime=access_token_lifetime)
+
                 return Response({
-                    'access': str(refresh.access_token),
+                    'access': str(access_token),
                     'refresh': str(refresh)
                 })
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
